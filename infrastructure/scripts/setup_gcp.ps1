@@ -26,7 +26,7 @@ param(
     [string]$Region = "us-central1"
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 
 # ─── Fix PATH: ensure gcloud is resolvable when script is called from any shell ──
 $gcloudPath = "$env:LOCALAPPDATA\Google\Cloud SDK\google-cloud-sdk\bin"
@@ -99,7 +99,8 @@ $apis = @(
     "cloudtrace.googleapis.com",
     "artifactregistry.googleapis.com",
     "firebase.googleapis.com",
-    "identitytoolkit.googleapis.com"
+    "identitytoolkit.googleapis.com",
+    "vpcaccess.googleapis.com"
     # Note: appcheck.googleapis.com is optional (Firebase premium).
     # Enable manually via Console if your project supports it:
     # https://console.cloud.google.com/apis/library/appcheck.googleapis.com
@@ -244,9 +245,10 @@ Write-Host ""
 # ─── Create VPC Connector ───────────────────────────────────
 Write-Host "Creating serverless VPC connector..." -ForegroundColor Yellow
 try {
-    gcloud compute networks vpc-access connectors create code-reviewer-vpc `
+    $null = gcloud compute networks vpc-access connectors create code-reviewer-vpc `
         --region="$Region" `
-        --range="10.8.0.0/28" 2>$null
+        --range="10.8.0.0/28" `
+        --quiet 2>&1
     Write-Host "  VPC connector created" -ForegroundColor Green
 } catch {
     Write-Host "  VPC connector already exists" -ForegroundColor DarkGray
