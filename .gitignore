@@ -67,6 +67,7 @@ ui-debug.log
 # ========================
 *-service-account*.json
 *-credentials*.json
+*firebase-adminsdk*.json
 gcloud-service-key.json
 
 # ========================
