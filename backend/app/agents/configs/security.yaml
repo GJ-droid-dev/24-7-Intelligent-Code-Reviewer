@@ -1,0 +1,31 @@
+# ============================================================
+# Security Agent Configuration
+# ============================================================
+
+name: "Security Agent"
+agent_id: "security"
+prompt_file: "security_system.prompt.md"
+model: "gemini-3.6-flash"
+temperature: 0.1
+max_output_tokens: 4096
+timeout_seconds: 30
+risk_threshold: "medium"
+
+categories:
+  - authentication
+  - authorization
+  - access_control
+  - injection
+  - input_validation
+  - sensitive_data_exposure
+  - secret_management
+  - cryptography
+  - session_management
+  - api_security
+  - file_security
+  - ssrf
+  - logging
+  - error_handling
+  - configuration
+  - dependency_security
+  - privacy

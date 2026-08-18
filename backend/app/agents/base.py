@@ -36,23 +36,38 @@ class BaseAgent(ABC):
             return self._prompt_cache
 
         search_dirs = [
+            os.path.join(os.getcwd(), "backend", "app", "agents", "prompts"),
             os.path.join(os.getcwd(), "backend", "prompts"),
             os.path.join(os.getcwd(), "backend", "Prompts"),
             os.path.join(os.getcwd(), "prompts"),
             os.path.join(os.getcwd(), "Prompts"),
+            os.path.abspath(os.path.join(os.path.dirname(__file__), "prompts")),
             os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "prompts")),
             os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "Prompts")),
         ]
 
+        candidate_filenames = [
+            self.config.prompt_file,
+            f"{self.agent_id}_system.prompt.md",
+            f"{self.agent_id}.md",
+            f"{self.config.name.replace(' ', '')}.md",
+        ]
+
         for directory in search_dirs:
-            prompt_path = os.path.join(directory, self.config.prompt_file)
-            if os.path.exists(prompt_path):
-                try:
-                    with open(prompt_path, "r", encoding="utf-8") as f:
-                        self._prompt_cache = f.read().strip()
-                        logger.info(f"Loaded prompt for {self.config.name} from {prompt_path}")
-                        return self._prompt_cache
-                except Exception as e:
+            if not os.path.exists(directory):
+                continue
+            for filename in candidate_filenames:
+                prompt_path = os.path.join(directory, filename)
+                if os.path.exists(prompt_path):
+                    try:
+                        with open(prompt_path, "r", encoding="utf-8") as f:
+                            content = f.read().strip()
+                            if content:
+                                self._prompt_cache = content
+                                logger.info(f"Loaded prompt for {self.config.name} from {prompt_path}")
+                                return self._prompt_cache
+                    except Exception as e:
+                        logger.warning(f"Error reading prompt file {prompt_path}: {e}")
                     logger.warning(f"Error reading prompt file {prompt_path}: {e}")
 
         logger.warning(f"No prompt file found for {self.config.name} ({self.config.prompt_file}). Using empty prompt.")
