@@ -97,3 +97,10 @@ desktop.ini
 # Agents / Gemini
 # ========================
 .agents/
+
+# ========================
+# Ideation & Local Artifacts
+# ========================
+stitch_prd_four_development/
+docs/Ideate/
+
