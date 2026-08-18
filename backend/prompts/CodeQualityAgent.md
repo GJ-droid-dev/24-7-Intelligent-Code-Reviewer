@@ -187,6 +187,7 @@ Return valid JSON only. Do not include Markdown, explanations outside the JSON o
 
 The response must match this structure:
 
+```json
 {
   "agent": "code_quality",
   "language": "detected language",
@@ -216,6 +217,7 @@ The response must match this structure:
     "Missing context or evidence that limited the analysis"
   ]
 }
+```
 
 ## Output Rules
 
@@ -244,3 +246,91 @@ You will receive a review context containing some or all of the following:
 - Linter or static-analysis output.
 
 Analyze only the supplied context and return the JSON contract above.
+
+---
+
+## Suggested Agent Input Template
+
+Use this as the user message or runtime context passed to the agent:
+
+```markdown
+Review the following code change for code quality.
+
+## Programming Language
+{{language}}
+
+## Pull Request Title
+{{title}}
+
+## Pull Request Description
+{{description}}
+
+## Project Coding Guidelines
+{{coding_guidelines}}
+
+## Changed Files
+{{changed_files}}
+
+## Unified Diff
+{{diff}}
+
+## Existing Relevant Project Files
+{{existing_files}}
+
+## Linter or Static-Analysis Results
+{{lint_results}}
+
+Return valid JSON according to the Code Quality Agent output contract.
+```
+
+---
+
+## Example Output
+
+```json
+{
+  "agent": "code_quality",
+  "language": "python",
+  "summary": "The change is understandable but places validation, persistence, and response formatting in one API handler.",
+  "findings": [
+    {
+      "category": "separation_of_concerns",
+      "severity": "medium",
+      "title": "API handler contains multiple unrelated responsibilities",
+      "location": {
+        "file": "app/routers/reviews.py",
+        "startLine": 24,
+        "endLine": 68,
+        "symbol": "create_review",
+        "snippet": "async def create_review(...)"
+      },
+      "description": "The handler validates the request, detects the language, creates the Firestore document, invokes the agent pipeline, and formats the response.",
+      "impact": "Changes to persistence or agent invocation will require modifying the HTTP layer, making the endpoint harder to test and maintain.",
+      "suggestedFix": "Move review creation and pipeline invocation into a service such as ReviewService, leaving the router responsible for request handling and response serialization.",
+      "confidence": 0.96
+    },
+    {
+      "category": "naming",
+      "severity": "low",
+      "title": "Variable name does not communicate domain meaning",
+      "location": {
+        "file": "app/services/review_service.py",
+        "startLine": 42,
+        "endLine": 42,
+        "symbol": "create_review",
+        "snippet": "data = await repository.fetch(...)"
+      },
+      "description": "The variable `data` represents the authenticated user's review record but uses a broad name that hides its domain meaning.",
+      "impact": "A more specific name would make the surrounding logic easier to understand and reduce cognitive overhead.",
+      "suggestedFix": "Rename `data` to `review_record` or another name that reflects the returned object.",
+      "confidence": 0.88
+    }
+  ],
+  "strengths": [
+    "The endpoint uses type annotations and delegates language detection to a dedicated service."
+  ],
+  "limitations": [
+    "No project-specific coding guidelines or linter output were provided."
+  ]
+}
+```

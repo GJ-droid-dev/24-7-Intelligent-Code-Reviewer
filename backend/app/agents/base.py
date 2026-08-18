@@ -72,6 +72,35 @@ class BaseAgent(ABC):
             "historicalRules": context.historicalRules,
         }
 
+    def format_user_prompt(self, context: PipelineContext) -> str:
+        """
+        Render the runtime user context prompt template passed to the agent.
+        """
+        return f"""Review the following code change for {self.config.name}.
+
+## Programming Language
+{context.language}
+
+## Pull Request Title
+{context.title or 'N/A'}
+
+## Pull Request Description
+{context.description or 'N/A'}
+
+## Project Coding Guidelines
+{context.guidelines or 'None provided'}
+
+## Changed Files
+{context.title or 'snippet.' + context.language}
+
+## Unified Diff / Source Code
+{context.code}
+
+## Linter or Static-Analysis Results
+None provided
+
+Return valid JSON according to the {self.config.name} output contract."""
+
     def parse_response(self, raw_text: str) -> SpecialistAgentResponse:
         """
         Parse raw model response text (expected JSON) into SpecialistAgentResponse model.
