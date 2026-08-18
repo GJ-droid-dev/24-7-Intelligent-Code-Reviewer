@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0A0A0A;
+  --foreground: #EBEBEB;
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Precision Editorial Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0A0A0A;
+}
+::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3D3D3D;
+}
+
+/* Code block styles */
+code, pre {
+  font-family: var(--font-geist-mono), "JetBrains Mono", monospace;
+}
+
+/* Glassmorphism card utilities */
+.glass-panel {
+  background: rgba(20, 20, 20, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid #262626;
+}
+
+.glass-panel-hover:hover {
+  background: rgba(26, 26, 26, 0.95);
+  border-color: #3D3D3D;
+}
+
+/* Radial glows for Score & Accents */
+.score-glow-high {
+  box-shadow: 0 0 35px rgba(52, 211, 153, 0.25);
+}
+
+.score-glow-mid {
+  box-shadow: 0 0 35px rgba(255, 159, 10, 0.25);
+}
+
+.score-glow-low {
+  box-shadow: 0 0 35px rgba(255, 69, 58, 0.25);
+}
