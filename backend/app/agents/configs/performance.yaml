@@ -1,0 +1,32 @@
+# ============================================================
+# Performance Agent Configuration
+# ============================================================
+
+name: "Performance Agent"
+agent_id: "performance"
+prompt_file: "performance_system.prompt.md"
+model: "gemini-3.6-flash"
+temperature: 0.1
+max_output_tokens: 4096
+timeout_seconds: 30
+risk_threshold: "medium"
+
+categories:
+  - algorithmic_complexity
+  - database_query
+  - n_plus_one
+  - pagination
+  - indexing
+  - caching
+  - batching
+  - network_io
+  - concurrency
+  - async_blocking
+  - memory
+  - resource_management
+  - serialization
+  - payload_size
+  - retry_behavior
+  - scalability
+  - latency
+  - cost
