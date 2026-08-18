@@ -59,24 +59,29 @@ Write-Host "Setting active project..." -ForegroundColor Yellow
 gcloud config set project $ProjectId
 Write-Host ""
 
-# ─── Enable APIs ─────────────────────────────────────────────
-# ─── Billing check ───────────────────────────────────────────
+# ─── Billing check (via REST API — no beta component needed) ─
 Write-Host "Checking billing status..." -ForegroundColor Yellow
-$billingInfo = gcloud beta billing projects describe $ProjectId --format="value(billingEnabled)" 2>&1
-if ($billingInfo -ne "True") {
-    Write-Host ""
-    Write-Host "  [!] BILLING IS NOT ENABLED on project $ProjectId" -ForegroundColor Red
-    Write-Host "" 
-    Write-Host "  To fix this:" -ForegroundColor Yellow
-    Write-Host "  1. Open: https://console.cloud.google.com/billing/projects?project=$ProjectId" -ForegroundColor Cyan
-    Write-Host "  2. Click 'Link a billing account' and select or create one" -ForegroundColor White
-    Write-Host "  3. Re-run this script after billing is enabled" -ForegroundColor White
-    Write-Host ""
-    Write-Host "  Skipping API enablement. All other steps will proceed..." -ForegroundColor DarkYellow
-    Write-Host ""
-    $skipApis = $true
-} else {
-    Write-Host "  Billing is enabled" -ForegroundColor Green
+try {
+    $token = (gcloud auth print-access-token 2>&1)
+    $billingUri = "https://cloudbilling.googleapis.com/v1/projects/$ProjectId/billingInfo"
+    $resp = Invoke-RestMethod -Uri $billingUri -Headers @{ Authorization = "Bearer $token" } -ErrorAction Stop
+    $skipApis = -not $resp.billingEnabled
+    if ($skipApis) {
+        Write-Host ""
+        Write-Host "  [!] BILLING IS NOT ENABLED on project $ProjectId" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "  To fix this:" -ForegroundColor Yellow
+        Write-Host "  1. Open: https://console.cloud.google.com/billing/projects?project=$ProjectId" -ForegroundColor Cyan
+        Write-Host "  2. Click 'Link a billing account' and select or create one" -ForegroundColor White
+        Write-Host "  3. Re-run this script after billing is enabled" -ForegroundColor White
+        Write-Host ""
+        Write-Host "  Skipping API enablement. All other steps will proceed..." -ForegroundColor DarkYellow
+        Write-Host ""
+    } else {
+        Write-Host "  Billing is enabled" -ForegroundColor Green
+    }
+} catch {
+    Write-Host "  Could not check billing status - proceeding anyway" -ForegroundColor DarkYellow
     $skipApis = $false
 }
 Write-Host ""
@@ -94,8 +99,10 @@ $apis = @(
     "cloudtrace.googleapis.com",
     "artifactregistry.googleapis.com",
     "firebase.googleapis.com",
-    "identitytoolkit.googleapis.com",
-    "appcheck.googleapis.com"
+    "identitytoolkit.googleapis.com"
+    # Note: appcheck.googleapis.com is optional (Firebase premium).
+    # Enable manually via Console if your project supports it:
+    # https://console.cloud.google.com/apis/library/appcheck.googleapis.com
 )
 
 if ($skipApis) {
@@ -103,18 +110,20 @@ if ($skipApis) {
 } else {
     $failedApis = @()
     foreach ($api in $apis) {
-        try {
-            gcloud services enable $api --quiet 2>$null | Out-Null
-            Write-Host "  [OK] $api" -ForegroundColor Green
-        } catch {
-            Write-Host "  [FAIL] $api" -ForegroundColor Red
+        Write-Host "  Enabling $api..." -NoNewline
+        $out = gcloud services enable $api --project $ProjectId 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host " OK" -ForegroundColor Green
+        } else {
+            Write-Host " FAILED" -ForegroundColor Red
             $failedApis += $api
         }
     }
     if ($failedApis.Count -gt 0) {
-        Write-Host "  Warning: $($failedApis.Count) API(s) failed to enable" -ForegroundColor Yellow
+        Write-Host "  Warning: $($failedApis.Count) API(s) failed to enable:" -ForegroundColor Yellow
+        $failedApis | ForEach-Object { Write-Host "    - $_" -ForegroundColor Yellow }
     } else {
-        Write-Host "  All APIs enabled" -ForegroundColor Green
+        Write-Host "  All 12 APIs enabled successfully" -ForegroundColor Green
     }
 }
 Write-Host ""
