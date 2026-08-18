@@ -1,0 +1,271 @@
+# Problem Statement  
+## Automations & Multi-Agent Systems — Problem Statement  
+
+## Background  
+
+Modern software teams move quickly, but code review often becomes a bottleneck. Developers may open pull requests with hundreds of lines of changes, and reviewers must check code quality, bugs, security risks, performance concerns, test coverage, and adherence to team conventions.  
+
+A developer may submit a pull request like:  
+
+> “Added a new customer-data API endpoint, updated the database query, and created unit tests.”  
+
+To review it properly, a team needs to answer several questions:  
+
+- Does the code introduce bugs or edge cases?  
+- Does it follow the project’s existing patterns and coding standards?  
+- Is customer data handled securely?  
+- Could the database query become slow at scale?  
+- Are the tests meaningful and sufficient?  
+- Has the team encountered a similar issue in previous pull requests?  
+
+A single reviewer may not have enough time or specialist knowledge to check every area deeply. This can lead to delayed releases, inconsistent reviews, missed defects, and repeated technical debt.  
+
+## Objective  
+
+Design a simple **Multi-Agent AI Code Reviewer** that automatically reviews a code change or pull request using multiple specialized AI agents.  
+
+The goal is not to replace human developers or approve code automatically. The goal is to show how specialized AI agents can analyze different aspects of a code change, collaborate through an orchestrator, and provide developers with structured, useful, and explainable review feedback.  
+
+## Real-World Problem to Solve  
+
+### “24/7 Intelligent Code Reviewer”  
+
+A developer submits a pull request or code snippet such as:  
+
+> “Add a Python API endpoint that returns customer order history. It includes a database query and basic unit tests.”  
+
+The system should produce:  
+
+- A clear code-review summary  
+- Potential bugs and edge cases  
+- Code-quality and maintainability suggestions  
+- Security and privacy warnings  
+- Performance concerns, especially around database usage  
+- Test-coverage recommendations  
+- A quality/risk score with explanations  
+- Suggested fixes or review comments for the developer  
+
+The output should help a human reviewer make a faster, more informed decision.  
+
+## Multi-Agent System Design  
+
+### 1. Orchestrator Agent  
+
+**Role:** Creates the review plan, sends the code to the right specialist agents, combines their findings, and produces the final review report.  
+
+**What it does:**  
+
+- Reads the pull request title, description, changed files, and code diff  
+- Identifies the programming language and type of change  
+- Extracts relevant context, such as API changes, database queries, authentication logic, or test files  
+- Delegates code analysis to specialist agents  
+- Resolves duplicate or conflicting findings  
+- Prioritizes issues by severity  
+- Synthesizes the final developer-friendly review  
+
+**Example output:**  
+
+- “This pull request adds a customer-order API endpoint.”  
+- “The review found one high-priority security concern, two performance risks, and one missing test case.”  
+- “Recommended action: resolve authorization validation before merging.”  
+
+***
+
+### 2. Code Quality Agent  
+
+**Role:** Reviews code structure, readability, maintainability, and adherence to project conventions.  
+
+**Possible inputs:**  
+
+- Pull request diff  
+- Repository coding guidelines  
+- Existing project files  
+- Linter or static-analysis results  
+- Past accepted pull-request patterns  
+
+**What it does:**  
+
+- Detects duplicated or overly complex code  
+- Flags unclear naming, large functions, and poor separation of concerns  
+- Checks whether the code follows common project patterns  
+- Suggests refactoring opportunities  
+- Identifies potentially difficult-to-maintain logic  
+
+**Example output:**  
+
+- “The API handler contains validation, database access, and response formatting in one function.”  
+- “Consider moving database logic into a service or repository layer.”  
+- “The variable name `data` is too broad; use `customer_orders` for clarity.”  
+
+***
+
+### 3. Security Agent  
+
+**Role:** Identifies security, privacy, and access-control risks in the code change.  
+
+**Possible inputs:**  
+
+- Source-code diff  
+- Authentication and authorization logic  
+- API route definitions  
+- Environment configuration  
+- Security rules and known vulnerability patterns  
+
+**What it does:**  
+
+- Checks for missing authentication or authorization  
+- Detects possible SQL injection, insecure input handling, or exposed secrets  
+- Flags logging of sensitive customer information  
+- Reviews whether users can access data belonging to other users  
+- Identifies unsafe error messages or insecure API behavior  
+
+**Example output:**  
+
+- “High risk: the endpoint accepts a customer ID but does not verify that the authenticated user owns that customer record.”  
+- “Avoid returning raw database errors to the client.”  
+- “Do not log full customer records, as they may contain personally identifiable information.”  
+
+***
+
+### 4. Performance Agent  
+
+**Role:** Reviews the code for scalability, database efficiency, and possible runtime bottlenecks.  
+
+**Possible inputs:**  
+
+- Database queries  
+- API endpoint code  
+- Query-execution plans, if available  
+- Existing performance guidelines  
+- Expected data volume or traffic assumptions  
+
+**What it does:**  
+
+- Detects inefficient database queries  
+- Identifies missing pagination for large datasets  
+- Flags repeated queries inside loops  
+- Checks for missing indexes or expensive joins  
+- Suggests caching or batching where appropriate  
+
+**Example output:**  
+
+- “The endpoint returns all order history without pagination, which may become slow for long-term customers.”  
+- “The query appears to fetch customer details repeatedly inside a loop.”  
+- “Consider adding pagination with `limit` and `offset`, or cursor-based pagination.”  
+
+***
+
+### 5. Test & Edge-Case Agent  
+
+**Role:** Checks whether the pull request has enough automated tests and considers scenarios the developer may have missed.  
+
+**Possible inputs:**  
+
+- Unit-test files  
+- Integration-test files  
+- API contract or endpoint specification  
+- Code diff  
+- Existing test patterns in the repository  
+
+**What it does:**  
+
+- Identifies whether key code paths have tests  
+- Suggests missing positive, negative, and edge-case test scenarios  
+- Checks for authorization, invalid input, empty data, and error-handling tests  
+- Reviews whether assertions meaningfully validate behavior  
+- Recommends integration tests when an API, database, or external service is involved  
+
+**Example output:**  
+
+- “Current tests cover a successful response but do not test unauthorized access.”  
+- “Add tests for an invalid customer ID, no orders found, database failure, and pagination.”  
+- “Test that one user cannot request another user’s order history.”  
+
+***
+
+### 6. Historical Learning Agent  
+
+**Role:** Uses previous pull requests, bug reports, and accepted review comments to provide repository-specific feedback.  
+
+**Possible inputs:**  
+
+- Past pull requests  
+- Previous code-review comments  
+- Production bug reports  
+- Internal engineering guidelines  
+- Resolved security or performance incidents  
+
+**What it does:**  
+
+- Finds similar code changes from the repository history  
+- Identifies repeated defect patterns  
+- Retrieves relevant past review feedback  
+- Highlights whether the current change repeats a previously known issue  
+- Helps make the review more specific to the team’s codebase rather than generic  
+
+**Example output:**  
+
+- “A similar endpoint previously caused an authorization issue because ownership validation was missing.”  
+- “The team’s past reviews recommend cursor pagination for order-history APIs.”  
+- “This query pattern is similar to a previous production performance incident.”  
+
+***
+
+### 7. Review Agent  
+
+**Role:** Validates and prioritizes the combined findings before the review is shown to the developer.  
+
+**What it checks:**  
+
+- Are the findings grounded in the submitted code?  
+- Are duplicate findings merged together?  
+- Is each issue assigned an appropriate severity level?  
+- Are suggestions actionable and understandable?  
+- Are critical security issues highlighted first?  
+- Does the final review separate blocking issues from optional improvements?  
+- Is the final quality score explained clearly?  
+
+This agent acts as the final quality checker before the review is delivered.  
+
+## Expected Workflow  
+
+```text
+Developer Pull Request
+        |
+        v
+Orchestrator Agent
+        |
+        +--> Code Quality Agent
+        |
+        +--> Security Agent
+        |
+        +--> Performance Agent
+        |
+        +--> Test & Edge-Case Agent
+        |
+        +--> Historical Learning Agent
+        |
+        v
+Review Agent
+        |
+        v
+Final AI Code Review Report
+```  
+
+## Example Final Output  
+
+**Pull Request:** Add customer order-history API  
+
+**Overall Risk Score:** Moderate  
+
+**Blocking issue:**  
+- The API endpoint must verify that the authenticated user is authorized to access the requested customer’s order history.  
+
+**Performance suggestion:**  
+- Add pagination because returning an unlimited order history may create slow responses for large accounts.  
+
+**Testing recommendation:**  
+- Add tests for unauthorized access, invalid customer IDs, empty order history, and pagination behavior.  
+
+**Code-quality suggestion:**  
+- Separate request validation, database logic, and response formatting into smaller functions or layers.

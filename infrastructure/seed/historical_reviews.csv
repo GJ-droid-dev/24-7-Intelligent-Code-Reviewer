@@ -1,0 +1,26 @@
+id,type,description
+1,formatting,Avoid single-character variable names — they hurt readability
+2,formatting,Use consistent naming conventions (snake_case for Python; camelCase for JavaScript)
+3,formatting,Keep functions under 30 lines — extract helper functions for clarity
+4,formatting,Remove commented-out code before merging — use version control instead
+5,performance,Cache repeated database lookups inside the request loop
+6,performance,Add pagination for any endpoint that returns unbounded lists
+7,performance,Avoid N+1 query patterns — use batch fetches or JOINs
+8,performance,Use database indexes for columns used in WHERE and ORDER BY clauses
+9,performance,Prefer async I/O for external API calls to avoid blocking the event loop
+10,security,Never interpolate raw user input directly into SQL queries — use parameterized queries
+11,security,Always validate that the authenticated user owns the requested resource
+12,security,Do not log personally identifiable information (PII) such as emails or phone numbers
+13,security,Avoid returning raw database errors to the client — use generic error messages
+14,security,Store secrets in environment variables or a secret manager — never hardcode them
+15,security,Validate and sanitize all user input on the server side — do not trust client validation alone
+16,testing,Write tests for both happy path and error scenarios
+17,testing,Test authorization — verify that users cannot access other users' data
+18,testing,Add edge-case tests for empty inputs; null values; and boundary conditions
+19,testing,Mock external dependencies in unit tests to ensure isolation
+20,testing,Assert specific values — avoid generic assertTrue without meaningful conditions
+21,code-quality,Separate request validation; business logic; and data access into distinct layers
+22,code-quality,Use descriptive variable and function names that convey intent
+23,code-quality,Avoid deep nesting — use early returns or guard clauses
+24,code-quality,Follow the Single Responsibility Principle — each function should do one thing
+25,code-quality,Remove unused imports and dead code before merging

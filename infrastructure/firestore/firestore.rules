@@ -1,0 +1,97 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================
+    // Helper Functions
+    // =========================================================
+
+    // Check if the request is from an authenticated user
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if the authenticated user owns this document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Validate that a string field exists and is non-empty
+    function isNonEmptyString(field) {
+      return field is string && field.size() > 0;
+    }
+
+    // =========================================================
+    // Users Collection
+    // =========================================================
+    match /users/{userId} {
+      // Users can only read and update their own profile
+      allow read: if isOwner(userId);
+
+      // Users can create their own profile document on registration
+      allow create: if isOwner(userId)
+                    && isNonEmptyString(request.resource.data.email)
+                    && isNonEmptyString(request.resource.data.displayName);
+
+      // Users can update their own profile (but not change UID or email)
+      allow update: if isOwner(userId)
+                    && request.resource.data.uid == resource.data.uid
+                    && request.resource.data.email == resource.data.email;
+
+      // Users cannot delete their own profile (admin-only operation)
+      allow delete: if false;
+    }
+
+    // =========================================================
+    // Reviews Collection
+    // =========================================================
+    match /reviews/{reviewId} {
+      // Users can only read their own reviews
+      allow read: if isAuthenticated()
+                  && resource.data.userId == request.auth.uid;
+
+      // Reviews are created by the backend service (not directly by clients)
+      // Client-side creation is blocked; backend uses Admin SDK (bypasses rules)
+      allow create: if false;
+
+      // Reviews cannot be updated or deleted by clients
+      allow update: if false;
+      allow delete: if false;
+
+      // -------------------------------------------------------
+      // Findings Sub-collection
+      // -------------------------------------------------------
+      match /findings/{findingId} {
+        // Users can read findings for their own reviews
+        allow read: if isAuthenticated()
+                    && get(/databases/$(database)/documents/reviews/$(reviewId)).data.userId == request.auth.uid;
+
+        // Findings are created by the backend service only
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+
+    // =========================================================
+    // Rules Collection (Historical CSV Rules)
+    // =========================================================
+    match /rules/{ruleId} {
+      // Rules are readable by any authenticated user (used by agents)
+      allow read: if isAuthenticated();
+
+      // Rules are managed by the backend service (Admin SDK) only
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // =========================================================
+    // Default: Deny all other access
+    // =========================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

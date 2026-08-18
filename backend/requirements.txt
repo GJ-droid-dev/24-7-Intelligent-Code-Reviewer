@@ -1,0 +1,14 @@
+# ============================================================
+# Backend Dependencies — Phase 1 (Seed & Foundation)
+# ============================================================
+# These are the minimal dependencies needed for Phase 1
+# (Firestore seeding and CSV ingestion). Additional packages
+# for FastAPI, Firebase Auth, and ADK will be added in Phase 2+.
+# ============================================================
+
+# Google Cloud
+google-cloud-firestore>=2.19.0
+google-cloud-storage>=2.18.0
+
+# Utilities
+python-dotenv>=1.0.0

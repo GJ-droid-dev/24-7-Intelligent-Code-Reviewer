@@ -1,0 +1,73 @@
+# ============================================================
+# Cloud Build — Backend CI/CD Pipeline
+# ============================================================
+# Builds the FastAPI backend container and deploys to Cloud Run.
+#
+# Trigger: Push to main branch (backend/ directory changes)
+#
+# Required substitutions:
+#   _REGION: Cloud Run region (e.g., us-central1)
+#   _SERVICE_NAME: Cloud Run service name (e.g., code-reviewer-backend)
+#   _GCS_RULES_BUCKET: Cloud Storage bucket for CSV rules
+# ============================================================
+
+steps:
+  # Step 1: Build the Docker image
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "-t",
+        "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:$SHORT_SHA",
+        "-t",
+        "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:latest",
+        "-f",
+        "backend/Dockerfile",
+        "backend/",
+      ]
+
+  # Step 2: Push the image to Container Registry
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:$SHORT_SHA"]
+
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:latest"]
+
+  # Step 3: Deploy to Cloud Run
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - "run"
+      - "deploy"
+      - "${_SERVICE_NAME}"
+      - "--image"
+      - "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:$SHORT_SHA"
+      - "--region"
+      - "${_REGION}"
+      - "--platform"
+      - "managed"
+      - "--allow-unauthenticated"
+      - "--set-env-vars"
+      - "GCP_PROJECT_ID=$PROJECT_ID,GCS_RULES_BUCKET=${_GCS_RULES_BUCKET}"
+      - "--memory"
+      - "512Mi"
+      - "--cpu"
+      - "1"
+      - "--min-instances"
+      - "0"
+      - "--max-instances"
+      - "10"
+      - "--timeout"
+      - "60s"
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE_NAME: code-reviewer-backend
+  _GCS_RULES_BUCKET: ${PROJECT_ID}-rules
+
+images:
+  - "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:$SHORT_SHA"
+  - "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:latest"
+
+options:
+  logging: CLOUD_LOGGING_ONLY

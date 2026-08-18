@@ -1,0 +1,18 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ─── Historical Rules CSV ─────────────────────────────────
+    // Only the backend service account can read/write the CSV.
+    // Client access is denied.
+    match /rules/{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // ─── Default: Deny all ────────────────────────────────────
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
