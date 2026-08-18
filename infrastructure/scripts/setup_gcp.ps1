@@ -242,19 +242,6 @@ foreach ($secretName in $secrets) {
 Write-Host "  Add values: gcloud secrets versions add firebase-admin-sdk-key --data-file=<path>" -ForegroundColor DarkYellow
 Write-Host ""
 
-# ─── Create VPC Connector ───────────────────────────────────
-Write-Host "Creating serverless VPC connector..." -ForegroundColor Yellow
-try {
-    $null = gcloud compute networks vpc-access connectors create code-reviewer-vpc `
-        --region="$Region" `
-        --range="10.8.0.0/28" `
-        --quiet 2>&1
-    Write-Host "  VPC connector created" -ForegroundColor Green
-} catch {
-    Write-Host "  VPC connector already exists" -ForegroundColor DarkGray
-}
-Write-Host ""
-
 # ─── Summary ────────────────────────────────────────────────
 Write-Host "==========================================================" -ForegroundColor Green
 Write-Host "  GCP Setup Complete!                                       " -ForegroundColor Green
@@ -269,7 +256,6 @@ Write-Host "  Service Accounts: backend-sa, frontend-sa" -ForegroundColor White
 Write-Host "  Firestore:        Native mode ($Region)" -ForegroundColor White
 Write-Host "  Storage:          gs://$bucketName" -ForegroundColor White
 Write-Host "  Secrets:          firebase-admin-sdk-key, firebase-api-key" -ForegroundColor White
-Write-Host "  VPC Connector:    code-reviewer-vpc" -ForegroundColor White
 Write-Host "==========================================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
