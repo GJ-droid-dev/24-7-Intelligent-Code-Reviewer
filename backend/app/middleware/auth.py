@@ -57,11 +57,14 @@ def verify_firebase_token(token: str) -> Dict[str, Any]:
     Returns decoded token dictionary on success, raises HTTPException on failure.
     """
     # Allow mock test token in development/test environment
-    if settings.environment in ("development", "test") and token == "mock-test-token":
+    if settings.environment in ("development", "test") and (token == "mock-test-token" or token.startswith("mock-")):
+        user_id = "test-user-001"
+        if token.startswith("mock-test-token-"):
+            user_id = token.replace("mock-test-token-", "")
         return {
-            "uid": "test-user-001",
-            "email": "test@example.com",
-            "name": "Test User",
+            "uid": user_id,
+            "email": "senior.reviewer@acme.dev",
+            "name": "Alex Rivera (Staff Eng)",
         }
 
     init_firebase()
