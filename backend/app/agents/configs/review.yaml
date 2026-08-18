@@ -1,0 +1,40 @@
+# ============================================================
+# Review Agent Configuration
+# ============================================================
+
+name: review_agent
+model: gemini-3.6-flash
+system_prompt_file: backend/app/agents/prompts/review_system.prompt.md
+
+temperature: 0.1
+timeout_seconds: 25
+max_attempts: 2
+
+scoring:
+  weights:
+    security: 0.30
+    performance: 0.20
+    codeQuality: 0.20
+    testCoverage: 0.20
+    historical: 0.10
+
+  score_range:
+    minimum: 1
+    maximum: 10
+
+  safety_floors:
+    critical_security_max_score: 4
+    high_security_max_score: 6
+
+severity_order:
+  - critical
+  - high
+  - medium
+  - low
+
+blocking_severities:
+  - critical
+
+preserve_agent_provenance: true
+require_grounded_locations: true
+require_historical_rule_validation: true

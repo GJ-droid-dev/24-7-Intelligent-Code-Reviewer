@@ -1,0 +1,24 @@
+# ============================================================
+# Code Quality Agent Configuration
+# ============================================================
+
+name: "Code Quality Agent"
+agent_id: "code_quality"
+prompt_file: "code_quality_system.prompt.md"
+model: "gemini-3.6-flash"
+temperature: 0.1
+max_output_tokens: 4096
+timeout_seconds: 30
+risk_threshold: "medium"
+
+categories:
+  - structure
+  - readability
+  - naming
+  - maintainability
+  - separation_of_concerns
+  - duplication
+  - complexity
+  - abstraction
+  - convention
+  - error_handling
