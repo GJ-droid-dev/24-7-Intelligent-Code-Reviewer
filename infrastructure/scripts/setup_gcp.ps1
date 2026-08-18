@@ -28,6 +28,23 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# ─── Fix PATH: ensure gcloud is resolvable when script is called from any shell ──
+$gcloudPath = "$env:LOCALAPPDATA\Google\Cloud SDK\google-cloud-sdk\bin"
+if (Test-Path $gcloudPath) {
+    $env:Path = "$gcloudPath;" + $env:Path
+} else {
+    # fallback: refresh from registry
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+}
+
+# Verify gcloud is available
+try { $null = Get-Command gcloud -ErrorAction Stop }
+catch {
+    Write-Host "ERROR: gcloud not found. Install Google Cloud SDK and re-run." -ForegroundColor Red
+    Write-Host "  Download: https://cloud.google.com/sdk/docs/install" -ForegroundColor Yellow
+    exit 1
+}
+
 Write-Host ""
 Write-Host "===========================================================" -ForegroundColor Cyan
 Write-Host "  Multi-Agent AI Code Reviewer - GCP Setup                  " -ForegroundColor Cyan
@@ -40,6 +57,28 @@ Write-Host ""
 # ─── Set Project ─────────────────────────────────────────────
 Write-Host "Setting active project..." -ForegroundColor Yellow
 gcloud config set project $ProjectId
+Write-Host ""
+
+# ─── Enable APIs ─────────────────────────────────────────────
+# ─── Billing check ───────────────────────────────────────────
+Write-Host "Checking billing status..." -ForegroundColor Yellow
+$billingInfo = gcloud beta billing projects describe $ProjectId --format="value(billingEnabled)" 2>&1
+if ($billingInfo -ne "True") {
+    Write-Host ""
+    Write-Host "  [!] BILLING IS NOT ENABLED on project $ProjectId" -ForegroundColor Red
+    Write-Host "" 
+    Write-Host "  To fix this:" -ForegroundColor Yellow
+    Write-Host "  1. Open: https://console.cloud.google.com/billing/projects?project=$ProjectId" -ForegroundColor Cyan
+    Write-Host "  2. Click 'Link a billing account' and select or create one" -ForegroundColor White
+    Write-Host "  3. Re-run this script after billing is enabled" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  Skipping API enablement. All other steps will proceed..." -ForegroundColor DarkYellow
+    Write-Host ""
+    $skipApis = $true
+} else {
+    Write-Host "  Billing is enabled" -ForegroundColor Green
+    $skipApis = $false
+}
 Write-Host ""
 
 # ─── Enable APIs ─────────────────────────────────────────────
@@ -59,8 +98,25 @@ $apis = @(
     "appcheck.googleapis.com"
 )
 
-gcloud services enable $apis
-Write-Host "  All APIs enabled" -ForegroundColor Green
+if ($skipApis) {
+    Write-Host "  Skipped (billing not enabled)" -ForegroundColor DarkYellow
+} else {
+    $failedApis = @()
+    foreach ($api in $apis) {
+        try {
+            gcloud services enable $api --quiet 2>$null | Out-Null
+            Write-Host "  [OK] $api" -ForegroundColor Green
+        } catch {
+            Write-Host "  [FAIL] $api" -ForegroundColor Red
+            $failedApis += $api
+        }
+    }
+    if ($failedApis.Count -gt 0) {
+        Write-Host "  Warning: $($failedApis.Count) API(s) failed to enable" -ForegroundColor Yellow
+    } else {
+        Write-Host "  All APIs enabled" -ForegroundColor Green
+    }
+}
 Write-Host ""
 
 # ─── Create Service Accounts ────────────────────────────────
@@ -189,16 +245,21 @@ try {
 Write-Host ""
 
 # ─── Summary ────────────────────────────────────────────────
-Write-Host "===========================================================" -ForegroundColor Green
+Write-Host "==========================================================" -ForegroundColor Green
 Write-Host "  GCP Setup Complete!                                       " -ForegroundColor Green
-Write-Host "===========================================================" -ForegroundColor Green
-Write-Host "  APIs:             12 enabled" -ForegroundColor White
+Write-Host "==========================================================" -ForegroundColor Green
+if ($skipApis) {
+    Write-Host "  APIs:             SKIPPED - enable billing first" -ForegroundColor Red
+    Write-Host "  Billing URL:      https://console.cloud.google.com/billing/projects?project=$ProjectId" -ForegroundColor Cyan
+} else {
+    Write-Host "  APIs:             12 enabled" -ForegroundColor White
+}
 Write-Host "  Service Accounts: backend-sa, frontend-sa" -ForegroundColor White
 Write-Host "  Firestore:        Native mode ($Region)" -ForegroundColor White
 Write-Host "  Storage:          gs://$bucketName" -ForegroundColor White
 Write-Host "  Secrets:          firebase-admin-sdk-key, firebase-api-key" -ForegroundColor White
 Write-Host "  VPC Connector:    code-reviewer-vpc" -ForegroundColor White
-Write-Host "===========================================================" -ForegroundColor Green
+Write-Host "==========================================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  1. Add Firebase Admin SDK key to Secret Manager" -ForegroundColor White
