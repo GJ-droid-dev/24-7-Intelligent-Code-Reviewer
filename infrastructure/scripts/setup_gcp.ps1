@@ -166,10 +166,10 @@ $backendRoles = @(
 )
 
 foreach ($role in $backendRoles) {
-    gcloud projects add-iam-policy-binding $ProjectId `
+    $null = gcloud projects add-iam-policy-binding $ProjectId `
         --member="serviceAccount:$backendSA" `
         --role="$role" `
-        --quiet 2>$null | Out-Null
+        --quiet 2>&1
 }
 Write-Host "  Backend SA roles assigned" -ForegroundColor Green
 
@@ -178,10 +178,10 @@ $frontendRoles = @(
 )
 
 foreach ($role in $frontendRoles) {
-    gcloud projects add-iam-policy-binding $ProjectId `
+    $null = gcloud projects add-iam-policy-binding $ProjectId `
         --member="serviceAccount:$frontendSA" `
         --role="$role" `
-        --quiet 2>$null | Out-Null
+        --quiet 2>&1
 }
 Write-Host "  Frontend SA roles assigned" -ForegroundColor Green
 Write-Host ""
@@ -218,7 +218,7 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $csvPath = Join-Path $scriptDir "..\seed\historical_reviews.csv"
 
 if (Test-Path $csvPath) {
-    gcloud storage cp $csvPath "gs://${bucketName}/rules/historical_reviews.csv"
+    $null = gcloud storage cp $csvPath "gs://${bucketName}/rules/historical_reviews.csv" 2>&1
     Write-Host "  CSV uploaded to gs://$bucketName/rules/historical_reviews.csv" -ForegroundColor Green
 } else {
     Write-Host "  CSV not found at $csvPath - upload manually" -ForegroundColor Red
