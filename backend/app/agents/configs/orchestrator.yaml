@@ -1,0 +1,41 @@
+# ============================================================
+# Orchestrator Agent Configuration
+# ============================================================
+
+name: orchestrator_agent
+model: gemini-3.6-flash
+system_prompt_file: backend/app/agents/prompts/orchestrator_system.prompt.md
+
+specialists:
+  - name: code_quality
+    config_file: backend/app/agents/configs/code_quality.yaml
+    timeout_seconds: 20
+    max_attempts: 2
+  - name: security
+    config_file: backend/app/agents/configs/security.yaml
+    timeout_seconds: 20
+    max_attempts: 2
+  - name: performance
+    config_file: backend/app/agents/configs/performance.yaml
+    timeout_seconds: 20
+    max_attempts: 2
+  - name: test_edge_case
+    config_file: backend/app/agents/configs/test_edge_case.yaml
+    timeout_seconds: 20
+    max_attempts: 2
+  - name: historical_learning
+    config_file: backend/app/agents/configs/historical_learning.yaml
+    timeout_seconds: 20
+    max_attempts: 2
+
+review_agent:
+  config_file: backend/app/agents/configs/review.yaml
+  timeout_seconds: 25
+  max_attempts: 2
+
+execution:
+  parallel_specialists: true
+  fail_fast: false
+  max_context_characters: 100000
+  preserve_agent_provenance: true
+  redact_secrets: true
