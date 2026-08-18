@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ScoreBreakdown } from "@/lib/types";
+import { ScoreBreakdown, ScoreDimension } from "@/lib/types";
 import { Shield, Zap, GitMerge, TestTube2, History } from "lucide-react";
 
 interface ScoreBreakdownChartProps {
@@ -11,13 +11,24 @@ interface ScoreBreakdownChartProps {
 export function ScoreBreakdownChart({ breakdown }: ScoreBreakdownChartProps) {
   if (!breakdown) return null;
 
+  const extractScore = (val?: number | ScoreDimension): number => {
+    if (typeof val === "number") return val;
+    if (val && typeof val.score === "number") return val.score;
+    return 7;
+  };
+
+  const extractRationale = (val?: number | ScoreDimension, fallback: string = ""): string => {
+    if (val && typeof val === "object" && val.rationale) return val.rationale;
+    return fallback;
+  };
+
   const dimensions = [
     {
       key: "security",
       name: "Security",
       weight: "30%",
-      score: breakdown.security?.score ?? 0,
-      rationale: breakdown.security?.rationale ?? "No major security issues identified.",
+      score: extractScore(breakdown.security),
+      rationale: extractRationale(breakdown.security, "Evaluated authentication, injection, secrets & data privacy."),
       icon: Shield,
       color: "bg-red-400",
     },
@@ -25,8 +36,8 @@ export function ScoreBreakdownChart({ breakdown }: ScoreBreakdownChartProps) {
       key: "performance",
       name: "Performance",
       weight: "20%",
-      score: breakdown.performance?.score ?? 0,
-      rationale: breakdown.performance?.rationale ?? "Evaluated query and algorithmic efficiency.",
+      score: extractScore(breakdown.performance),
+      rationale: extractRationale(breakdown.performance, "Evaluated query and algorithmic efficiency."),
       icon: Zap,
       color: "bg-amber-400",
     },
@@ -34,8 +45,8 @@ export function ScoreBreakdownChart({ breakdown }: ScoreBreakdownChartProps) {
       key: "codeQuality",
       name: "Code Quality",
       weight: "20%",
-      score: breakdown.codeQuality?.score ?? 0,
-      rationale: breakdown.codeQuality?.rationale ?? "Assessed structure, readability and separation of concerns.",
+      score: extractScore(breakdown.codeQuality),
+      rationale: extractRationale(breakdown.codeQuality, "Assessed structure, readability and separation of concerns."),
       icon: GitMerge,
       color: "bg-blue-400",
     },
@@ -43,8 +54,8 @@ export function ScoreBreakdownChart({ breakdown }: ScoreBreakdownChartProps) {
       key: "testCoverage",
       name: "Test Coverage",
       weight: "20%",
-      score: breakdown.testCoverage?.score ?? 0,
-      rationale: breakdown.testCoverage?.rationale ?? "Evaluated test scenarios, edge cases and failure paths.",
+      score: extractScore(breakdown.testCoverage),
+      rationale: extractRationale(breakdown.testCoverage, "Evaluated test scenarios, edge cases and failure paths."),
       icon: TestTube2,
       color: "bg-purple-400",
     },
@@ -52,8 +63,8 @@ export function ScoreBreakdownChart({ breakdown }: ScoreBreakdownChartProps) {
       key: "historical",
       name: "Historical Rules",
       weight: "10%",
-      score: breakdown.historical?.score ?? 0,
-      rationale: breakdown.historical?.rationale ?? "Checked alignment with repository guidelines and past review patterns.",
+      score: extractScore(breakdown.historical),
+      rationale: extractRationale(breakdown.historical, "Checked alignment with repository guidelines and past review patterns."),
       icon: History,
       color: "bg-emerald-400",
     },

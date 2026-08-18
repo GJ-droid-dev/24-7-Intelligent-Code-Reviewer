@@ -13,10 +13,11 @@ export interface FindingLocation {
 
 export interface Finding {
   id: string;
-  agentSources: string[];
+  agentSource?: string;
+  agentSources?: string[];
   category: string;
   severity: Severity;
-  title: string;
+  title?: string;
   location?: FindingLocation;
   description?: string;
   evidence?: string;
@@ -28,15 +29,15 @@ export interface Finding {
 
 export interface ScoreDimension {
   score: number;
-  rationale: string;
+  rationale?: string;
 }
 
 export interface ScoreBreakdown {
-  security: ScoreDimension;
-  performance: ScoreDimension;
-  codeQuality: ScoreDimension;
-  testCoverage: ScoreDimension;
-  historical: ScoreDimension;
+  security?: number | ScoreDimension;
+  performance?: number | ScoreDimension;
+  codeQuality?: number | ScoreDimension;
+  testCoverage?: number | ScoreDimension;
+  historical?: number | ScoreDimension;
 }
 
 export interface AgentStatus {

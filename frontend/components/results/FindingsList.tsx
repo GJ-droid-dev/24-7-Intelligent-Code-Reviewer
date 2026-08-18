@@ -37,18 +37,30 @@ export function FindingsList({ findings = [] }: FindingsListProps) {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  // Helper to extract sources safely
+  const getSources = (f: Finding): string[] => {
+    if (Array.isArray(f.agentSources) && f.agentSources.length > 0) {
+      return f.agentSources;
+    }
+    if (f.agentSource) {
+      return [f.agentSource];
+    }
+    return ["analyzer"];
+  };
+
   // Filter findings
   const filteredFindings = findings.filter((f) => {
-    const matchesSeverity = selectedSeverity === "all" || f.severity.toLowerCase() === selectedSeverity;
+    const matchesSeverity = selectedSeverity === "all" || (f.severity && f.severity.toLowerCase() === selectedSeverity);
+    const sources = getSources(f);
     const matchesAgent =
       selectedAgent === "all" ||
-      f.agentSources.some((s) => s.toLowerCase().includes(selectedAgent.toLowerCase())) ||
-      f.category.toLowerCase().includes(selectedAgent.toLowerCase());
+      sources.some((s) => s.toLowerCase().includes(selectedAgent.toLowerCase())) ||
+      (f.category && f.category.toLowerCase().includes(selectedAgent.toLowerCase()));
     return matchesSeverity && matchesAgent;
   });
 
-  const getSeverityBadge = (sev: Severity) => {
-    switch (sev.toLowerCase()) {
+  const getSeverityBadge = (sev?: Severity) => {
+    switch (sev?.toLowerCase()) {
       case "critical":
         return {
           bg: "bg-red-500/10 text-red-400 border-red-500/30",
@@ -136,6 +148,8 @@ export function FindingsList({ findings = [] }: FindingsListProps) {
             const badge = getSeverityBadge(finding.severity);
             const Icon = badge.icon;
             const isExpanded = expandedFindings[finding.id || idx] !== false; // expanded by default
+            const sources = getSources(finding);
+            const title = finding.title || finding.description || `Finding #${idx + 1}`;
 
             return (
               <div
@@ -155,7 +169,7 @@ export function FindingsList({ findings = [] }: FindingsListProps) {
 
                     <div className="space-y-1">
                       <h4 className="text-sm font-semibold text-[#FFFFFF] hover:text-[#3291FF] transition-colors">
-                        {finding.title}
+                        {title}
                       </h4>
 
                       <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-[#8F8F8F]">
@@ -170,10 +184,14 @@ export function FindingsList({ findings = [] }: FindingsListProps) {
                           </span>
                         )}
 
-                        <span>•</span>
+                        {finding.category && (
+                          <span className="px-1.5 py-0.2 rounded bg-[#1A1A1A] border border-[#262626] text-[#A1A1AA] text-[10px] font-mono">
+                            {finding.category}
+                          </span>
+                        )}
 
                         <div className="flex items-center space-x-1">
-                          {finding.agentSources.map((source) => (
+                          {sources.map((source) => (
                             <span
                               key={source}
                               className="px-1.5 py-0.2 rounded bg-[#1F1F1F] text-[#8F8F8F] text-[10px]"
@@ -195,7 +213,7 @@ export function FindingsList({ findings = [] }: FindingsListProps) {
                 {isExpanded && (
                   <div className="px-4 pb-4 pt-1 space-y-3.5 border-t border-[#222222] bg-[#101010]/80">
                     {/* Description */}
-                    {finding.description && (
+                    {finding.description && finding.title && (
                       <div className="space-y-1">
                         <span className="text-[10px] font-mono text-[#8F8F8F] uppercase tracking-wider">
                           Evidence & Analysis
