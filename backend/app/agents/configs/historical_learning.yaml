@@ -1,0 +1,25 @@
+# ============================================================
+# Historical Learning Agent Configuration
+# ============================================================
+
+name: "Historical Learning Agent"
+agent_id: "historical_learning"
+prompt_file: "historical_learning_system.prompt.md"
+model: "gemini-3.6-flash"
+temperature: 0.1
+max_output_tokens: 4096
+timeout_seconds: 30
+risk_threshold: "medium"
+
+categories:
+  - historical_security
+  - historical_performance
+  - historical_formatting
+  - historical_readability
+  - historical_testing
+  - historical_architecture
+  - historical_maintainability
+  - historical_database
+  - historical_api
+  - historical_reliability
+  - historical_other
