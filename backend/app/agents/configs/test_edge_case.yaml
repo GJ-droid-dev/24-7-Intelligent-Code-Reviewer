@@ -1,0 +1,32 @@
+# ============================================================
+# Test & Edge-Case Agent Configuration
+# ============================================================
+
+name: "Test & Edge-Case Agent"
+agent_id: "test_edge_case"
+prompt_file: "test_edge_case_system.prompt.md"
+model: "gemini-3.6-flash"
+temperature: 0.1
+max_output_tokens: 4096
+timeout_seconds: 30
+risk_threshold: "medium"
+
+categories:
+  - missing_positive_case
+  - missing_negative_case
+  - missing_edge_case
+  - missing_boundary_case
+  - missing_authorization_test
+  - missing_authentication_test
+  - missing_validation_test
+  - missing_error_path
+  - missing_integration_test
+  - missing_contract_test
+  - missing_regression_test
+  - weak_assertion
+  - implementation_detail_test
+  - test_isolation
+  - test_flakiness
+  - untested_side_effect
+  - incorrect_test_setup
+  - incorrect_test_expectation
