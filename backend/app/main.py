@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.middleware.auth import init_firebase
 from app.services.csv_ingestion import ingest_rules_into_firestore
-from app.routers import health, reviews
+from app.routers import health, reviews, rules
 
 # Configure application logging
 logging.basicConfig(
@@ -63,6 +63,7 @@ app.add_middleware(
 # ─── Router Registration ─────────────────────────────────────
 app.include_router(health.router)
 app.include_router(reviews.router)
+app.include_router(rules.router)
 
 
 @app.get("/", tags=["Root"])

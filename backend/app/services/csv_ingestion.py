@@ -75,19 +75,12 @@ def parse_rules_csv(csv_text: str) -> List[Dict[str, Any]]:
     return rules
 
 
-def ingest_rules_into_firestore(db: Optional[firestore.Client] = None) -> int:
+def save_rules_to_firestore(rules: List[Dict[str, Any]], db: Optional[firestore.Client] = None) -> int:
     """
-    Orchestrates downloading CSV, parsing rules, and upserting into Firestore 'rules' collection.
-    Returns the count of ingested rules.
+    Saves a list of parsed rules into Firestore 'rules' collection.
+    Returns count of ingested rules.
     """
-    csv_content = fetch_csv_content()
-    if not csv_content:
-        logger.warning("Skipping rule ingestion — no CSV content available.")
-        return 0
-
-    rules = parse_rules_csv(csv_content)
     if not rules:
-        logger.warning("No valid rules found in CSV.")
         return 0
 
     if db is None:
@@ -102,10 +95,11 @@ def ingest_rules_into_firestore(db: Optional[firestore.Client] = None) -> int:
     total_ingested = 0
 
     for rule in rules:
-        doc_ref = db.collection("rules").document(rule["id"])
+        doc_ref = db.collection("rules").document(str(rule["id"]))
         batch.set(doc_ref, {
-            "type": rule["type"],
-            "description": rule["description"],
+            "id": str(rule["id"]),
+            "type": rule.get("type", "general"),
+            "description": rule.get("description", ""),
             "updatedAt": firestore.SERVER_TIMESTAMP,
         }, merge=True)
         batch_count += 1
@@ -121,3 +115,21 @@ def ingest_rules_into_firestore(db: Optional[firestore.Client] = None) -> int:
 
     logger.info(f"Ingested {total_ingested} rules into Firestore 'rules' collection.")
     return total_ingested
+
+
+def ingest_rules_into_firestore(db: Optional[firestore.Client] = None) -> int:
+    """
+    Orchestrates downloading CSV, parsing rules, and upserting into Firestore 'rules' collection.
+    Returns the count of ingested rules.
+    """
+    csv_content = fetch_csv_content()
+    if not csv_content:
+        logger.warning("Skipping rule ingestion — no CSV content available.")
+        return 0
+
+    rules = parse_rules_csv(csv_content)
+    if not rules:
+        logger.warning("No valid rules found in CSV.")
+        return 0
+
+    return save_rules_to_firestore(rules, db=db)
