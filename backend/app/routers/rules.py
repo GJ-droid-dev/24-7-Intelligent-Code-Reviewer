@@ -1,10 +1,8 @@
-# ============================================================
-# Rules Router — Historical Rules Listing & CSV Upload
-# ============================================================
-
 import logging
 from typing import Dict, Any, List
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
+from pydantic import BaseModel, Field
+from google.cloud import firestore
 from app.dependencies import get_firestore_client
 from app.middleware.auth import get_current_user
 from app.services.csv_ingestion import parse_rules_csv, save_rules_to_firestore
@@ -14,14 +12,80 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/rules", tags=["Rules"])
 
 
+class CreateRuleRequest(BaseModel):
+    type: str = Field(..., min_length=1, max_length=50, description="Rule category (e.g. security, performance, formatting, testing)")
+    description: str = Field(..., min_length=5, max_length=1000, description="Engineering convention / rule text")
+
+
+@router.post("", status_code=status.HTTP_201_CREATED)
+async def create_rule(
+    payload: CreateRuleRequest,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: Any = Depends(get_firestore_client),
+) -> Dict[str, Any]:
+    """
+    Create a new repository rule.
+    ID is automatically assigned sequentially based on existing rules in Firestore.
+    """
+    rule_type = payload.type.strip().lower()
+    rule_description = payload.description.strip()
+
+    if not rule_description:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Rule description cannot be empty.",
+        )
+
+    try:
+        # Scan existing rules to compute the next sequential integer ID
+        docs = list(db.collection("rules").stream())
+        max_id = 0
+        for doc in docs:
+            data = doc.to_dict()
+            rid = data.get("id", doc.id)
+            if str(rid).isdigit():
+                max_id = max(max_id, int(rid))
+
+        new_id = str(max_id + 1) if max_id > 0 else (str(len(docs) + 1) if docs else "1")
+
+        rule_data = {
+            "id": new_id,
+            "type": rule_type,
+            "description": rule_description,
+            "createdAt": firestore.SERVER_TIMESTAMP,
+            "updatedAt": firestore.SERVER_TIMESTAMP,
+            "createdBy": current_user.get("uid", "anonymous"),
+        }
+
+        doc_ref = db.collection("rules").document(new_id)
+        doc_ref.set(rule_data, merge=True)
+
+        logger.info(f"Successfully created rule #{new_id} [{rule_type}] in Firestore.")
+
+        return {
+            "message": f"Rule #{new_id} successfully created.",
+            "rule": {
+                "id": new_id,
+                "type": rule_type,
+                "description": rule_description,
+            },
+        }
+    except Exception as e:
+        logger.error(f"Error creating rule in Firestore: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create rule in Firestore: {str(e)}",
+        )
+
+
 @router.get("", status_code=status.HTTP_200_OK)
 async def list_rules(
     current_user: Dict[str, Any] = Depends(get_current_user),
+    db: Any = Depends(get_firestore_client),
 ) -> Dict[str, Any]:
     """
     List all historical review rules stored in Firestore.
     """
-    db = get_firestore_client()
     rules: List[Dict[str, Any]] = []
 
     try:

@@ -2,18 +2,22 @@
 
 import React, { useState } from "react";
 import { HistoricalRule } from "@/lib/types";
-import { BookOpen, Upload, Search, CheckCircle2 } from "lucide-react";
+import { BookOpen, Upload, Search, CheckCircle2, Plus } from "lucide-react";
+import { CreateRuleModal } from "./CreateRuleModal";
 
 interface RulesTableProps {
   rules: HistoricalRule[];
   onUploadCsv?: (file: File) => Promise<void>;
+  onCreateRule?: (rule: { type: string; description: string }) => Promise<HistoricalRule | void>;
 }
 
-export function RulesTable({ rules = [], onUploadCsv }: RulesTableProps) {
+export function RulesTable({ rules = [], onUploadCsv, onCreateRule }: RulesTableProps) {
   const [selectedType, setSelectedType] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [createSuccessMsg, setCreateSuccessMsg] = useState<string | null>(null);
 
   const filteredRules = rules.filter((r) => {
     const matchesType = selectedType === "all" || r.type.toLowerCase() === selectedType.toLowerCase();
@@ -39,6 +43,13 @@ export function RulesTable({ rules = [], onUploadCsv }: RulesTableProps) {
     }
   };
 
+  const handleCreateRule = async (rule: { type: string; description: string }) => {
+    if (!onCreateRule) return;
+    await onCreateRule(rule);
+    setCreateSuccessMsg(`Rule successfully added to knowledge base!`);
+    setTimeout(() => setCreateSuccessMsg(null), 4000);
+  };
+
   const getTypeBadge = (type: string) => {
     switch (type.toLowerCase()) {
       case "security":
@@ -49,48 +60,81 @@ export function RulesTable({ rules = [], onUploadCsv }: RulesTableProps) {
         return "bg-purple-500/10 text-purple-400 border-purple-500/30";
       case "formatting":
         return "bg-blue-500/10 text-blue-400 border-blue-500/30";
-      default:
+      case "readability":
         return "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+      case "architecture":
+        return "bg-cyan-500/10 text-cyan-400 border-cyan-500/30";
+      default:
+        return "bg-zinc-500/10 text-zinc-400 border-zinc-500/30";
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Upload CSV Dropzone Card */}
+      {/* Upload CSV & Actions Card */}
       <div className="rounded-xl bg-[#141414] border border-[#262626] p-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
               <BookOpen className="w-4 h-4 text-[#3291FF]" />
               <h3 className="text-xs font-mono font-semibold text-[#FFFFFF] uppercase tracking-wider">
-                Ingest Team Review Knowledge (CSV)
+                Ingest Team Review Knowledge
               </h3>
             </div>
             <p className="text-xs text-[#8F8F8F]">
-              Import repository conventions, anti-patterns, and architecture guidelines. Required schema: <code className="text-[#3291FF] font-mono">id,type,description</code>
+              Add custom repository conventions, anti-patterns, or import CSV bulk rules.
             </p>
           </div>
 
-          <label className="cursor-pointer inline-flex items-center space-x-2 px-4 py-2 rounded bg-[#1A1A1A] hover:bg-[#222222] border border-[#3291FF]/40 text-[#3291FF] text-xs font-mono transition-colors shrink-0">
-            <Upload className="w-3.5 h-3.5" />
-            <span>{uploading ? "Ingesting..." : "Upload Rules CSV"}</span>
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleFileDrop}
-              disabled={uploading}
-              className="hidden"
-            />
-          </label>
+          <div className="flex items-center space-x-3 shrink-0">
+            {onCreateRule && (
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                className="inline-flex items-center space-x-1.5 px-4 py-2 rounded bg-[#3291FF] hover:bg-[#0070F3] text-white text-xs font-mono font-medium transition-colors shadow-lg shadow-[#3291FF]/20"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Create New Rule</span>
+              </button>
+            )}
+
+            <label className="cursor-pointer inline-flex items-center space-x-2 px-4 py-2 rounded bg-[#1A1A1A] hover:bg-[#222222] border border-[#262626] text-[#EBEBEB] hover:text-white text-xs font-mono transition-colors">
+              <Upload className="w-3.5 h-3.5 text-[#3291FF]" />
+              <span>{uploading ? "Ingesting..." : "Upload Rules CSV"}</span>
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleFileDrop}
+                disabled={uploading}
+                className="hidden"
+              />
+            </label>
+          </div>
         </div>
 
         {uploadSuccess && (
-          <div className="mt-3 p-2 rounded bg-emerald-950/30 border border-emerald-900/40 flex items-center space-x-2 text-xs text-emerald-400 font-mono">
+          <div className="mt-3 p-2.5 rounded bg-emerald-950/30 border border-emerald-900/40 flex items-center space-x-2 text-xs text-emerald-400 font-mono">
             <CheckCircle2 className="w-4 h-4" />
             <span>Rules successfully ingested into Historical Learning Knowledge Base!</span>
           </div>
         )}
+
+        {createSuccessMsg && (
+          <div className="mt-3 p-2.5 rounded bg-emerald-950/30 border border-emerald-900/40 flex items-center space-x-2 text-xs text-emerald-400 font-mono">
+            <CheckCircle2 className="w-4 h-4" />
+            <span>{createSuccessMsg}</span>
+          </div>
+        )}
       </div>
+
+      {/* Create Rule Modal */}
+      {onCreateRule && (
+        <CreateRuleModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleCreateRule}
+        />
+      )}
 
       {/* Rules Table Explorer */}
       <div className="rounded-xl bg-[#141414] border border-[#262626] p-5 space-y-4">
@@ -129,6 +173,8 @@ export function RulesTable({ rules = [], onUploadCsv }: RulesTableProps) {
               <option value="formatting">Formatting</option>
               <option value="readability">Readability</option>
               <option value="testing">Testing</option>
+              <option value="architecture">Architecture</option>
+              <option value="general">General</option>
             </select>
           </div>
         </div>

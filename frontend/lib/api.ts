@@ -107,6 +107,18 @@ export const api = {
     }
   },
 
+  // Create a new rule
+  async createRule(
+    rule: { type: string; description: string },
+    token: string
+  ): Promise<{ message: string; rule: HistoricalRule }> {
+    return apiFetch<{ message: string; rule: HistoricalRule }>("/rules", {
+      method: "POST",
+      body: JSON.stringify(rule),
+      token,
+    });
+  },
+
   // Upload CSV rules
   async uploadRulesCsv(file: File, token: string): Promise<{ message: string; count: number }> {
     const formData = new FormData();

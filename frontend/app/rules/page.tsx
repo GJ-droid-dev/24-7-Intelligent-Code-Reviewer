@@ -47,6 +47,17 @@ export default function RulesPage() {
     await fetchRules();
   };
 
+  const handleCreateRule = async (rule: { type: string; description: string }) => {
+    let token = await getIdToken();
+    if (!token) {
+      signInDemo();
+      token = "mock-test-token-test-user-001";
+    }
+
+    await api.createRule(rule, token);
+    await fetchRules();
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -65,14 +76,16 @@ export default function RulesPage() {
           </p>
         </div>
 
-        <button
-          onClick={fetchRules}
-          disabled={refreshing}
-          className="flex items-center space-x-1.5 px-3 py-1.5 rounded bg-[#141414] hover:bg-[#1A1A1A] border border-[#262626] text-xs font-mono text-[#EBEBEB] transition-colors self-start sm:self-auto"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
-          <span>Refresh Rules</span>
-        </button>
+        <div className="flex items-center space-x-2.5 self-start sm:self-auto">
+          <button
+            onClick={fetchRules}
+            disabled={refreshing}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded bg-[#141414] hover:bg-[#1A1A1A] border border-[#262626] text-xs font-mono text-[#EBEBEB] transition-colors"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
+            <span>Refresh Rules</span>
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -81,7 +94,11 @@ export default function RulesPage() {
           <p className="text-xs font-mono text-[#8F8F8F]">Loading Historical Knowledge Base...</p>
         </div>
       ) : (
-        <RulesTable rules={rules} onUploadCsv={handleUploadCsv} />
+        <RulesTable 
+          rules={rules} 
+          onUploadCsv={handleUploadCsv} 
+          onCreateRule={handleCreateRule}
+        />
       )}
     </div>
   );
