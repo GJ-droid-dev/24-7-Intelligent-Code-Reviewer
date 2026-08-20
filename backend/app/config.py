@@ -3,16 +3,19 @@
 # ============================================================
 
 import os
-from typing import List, Union
+from typing import List, Union, Optional
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv(usecwd=True))
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment or .env file."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env", "../.env", os.path.join(os.path.dirname(__file__), "..", "..", ".env")),
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=False,
@@ -27,6 +30,7 @@ class Settings(BaseSettings):
     cors_allowed_origins: Union[List[str], str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "https://code-reviewer-frontend-g4bxczv4yq-uc.a.run.app",
     ]
 
     @field_validator("cors_allowed_origins", mode="before")
@@ -41,6 +45,7 @@ class Settings(BaseSettings):
     gcs_rules_csv_path: str = "rules/historical_reviews.csv"
 
     # ─── Agent Defaults ─────────────────────────────────────
+    gemini_api_key: Optional[str] = None
     gemini_model: str = "gemini-3.6-flash"
     agent_timeout_seconds: int = 30
     agent_max_retries: int = 2

@@ -21,6 +21,7 @@ class Finding(BaseModel):
     ] = Field(..., description="Agent that produced this finding")
     category: str = Field(..., description="Category label (e.g. Blocking Issue, Optimization, Style)")
     severity: Literal["critical", "high", "medium", "low"] = Field(..., description="Severity level")
+    title: Optional[str] = Field(None, description="Short summary title")
     description: str = Field(..., description="Detailed explanation of the finding")
     suggestedFix: str = Field(..., description="Concrete code or architecture fix suggestion")
     matchedRuleId: Optional[str] = Field(None, description="Referenced historical rule ID if applicable")

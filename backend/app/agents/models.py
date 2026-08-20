@@ -3,12 +3,13 @@
 # ============================================================
 
 from typing import List, Optional, Dict, Any, Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from app.models.finding import Finding, ScoreBreakdown
 
 
 class FindingLocation(BaseModel):
     """Location information for an individual finding."""
+    model_config = ConfigDict(extra="ignore")
 
     file: Optional[str] = Field(None, description="Path to file")
     startLine: Optional[int] = Field(None, description="Starting line number")
@@ -19,20 +20,31 @@ class FindingLocation(BaseModel):
 
 class AgentFinding(BaseModel):
     """Structured finding emitted by a specialist agent."""
+    model_config = ConfigDict(extra="ignore")
 
-    category: str = Field(..., description="Finding category")
-    severity: Literal["critical", "high", "medium", "low"] = Field(..., description="Severity level")
+    category: str = Field("general", description="Finding category")
+    severity: Literal["critical", "high", "medium", "low"] = Field("medium", description="Severity level")
     title: Optional[str] = Field(None, description="Short summary title")
     location: Optional[FindingLocation] = Field(None, description="Code location reference")
-    description: str = Field(..., description="Evidence-based explanation")
+    description: str = Field("", description="Evidence-based explanation")
     impact: Optional[str] = Field(None, description="Impact explanation")
-    suggestedFix: str = Field(..., description="Actionable remediation")
-    confidence: Optional[float] = Field(1.0, ge=0.0, le=1.0, description="Confidence score 0.0–1.0")
+    suggestedFix: str = Field("", description="Actionable remediation")
+    confidence: Optional[float] = Field(1.0, description="Confidence score 0.0–1.0")
     matchedRuleId: Optional[str] = Field(None, description="Matched historical rule ID if applicable")
+
+    @field_validator("severity", mode="before")
+    @classmethod
+    def normalize_severity(cls, v: Any) -> str:
+        if isinstance(v, str):
+            v_lower = v.lower().strip()
+            if v_lower in ("critical", "high", "medium", "low"):
+                return v_lower
+        return "medium"
 
 
 class SpecialistAgentResponse(BaseModel):
     """Standard response contract from a specialist agent."""
+    model_config = ConfigDict(extra="ignore")
 
     agent: str = Field(..., description="Name of the reporting agent")
     language: Optional[str] = Field(None, description="Detected or analyzed language")

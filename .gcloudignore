@@ -1,0 +1,39 @@
+.gcloudignore
+.git
+.gitignore
+
+# Dependencies & Build artifacts
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+out/
+build/
+dist/
+
+# Python caches & virtualenvs
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+**/.pytest_cache/
+.venv/
+venv/
+env/
+.coverage
+htmlcov/
+
+# Secrets & Environment
+.env*
+daring-fiber-*.json
+*.pem
+*.key
+
+# IDEs & System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+docs/
+stitch_prd_four_development/

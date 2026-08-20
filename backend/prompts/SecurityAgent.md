@@ -25,6 +25,16 @@ Analyze the submitted code for:
 13. Security-relevant dependency or configuration issues.
 14. Multi-tenant isolation failures.
 
+## 🚨 CRITICAL OWASP VULNERABILITIES 🚨
+
+You MUST actively scan for and flag the following critical vulnerabilities. If any of these are present, they MUST be assigned a `critical` or `high` severity:
+
+1. **Insecure Deserialization & RCE:** Unsafe deserialization (e.g., Python's `pickle`, unsafe YAML parsing) that can lead to Remote Code Execution.
+2. **Command Injection:** Unsafe execution of system commands (e.g., `os.system`, `subprocess.Popen(..., shell=True)`) using untrusted input.
+3. **Path Traversal & Arbitrary File Access:** Allowing users to read or write arbitrary files on the filesystem.
+4. **Hardcoded Secrets:** Committing plaintext API keys, passwords, private keys, or sensitive configuration into the code.
+5. **Race Conditions & Concurrency Vulnerabilities:** Unsafe mutation of global or shared state across threads or async tasks.
+
 ## Security Review Scope
 
 ### Authentication
@@ -240,8 +250,8 @@ Do not report findings without a concrete reference to the supplied code or conf
 
 Use exactly one of these severity values:
 
-- `critical`: Direct, severe compromise is likely, such as remote code execution, authentication bypass with broad access, or unrestricted access to highly sensitive data.
-- `high`: Significant exploitable vulnerability, privilege escalation, injection, secret exposure, or cross-tenant data access that should block merging.
+- `critical`: Direct, severe compromise is likely, such as remote code execution, command injection, insecure deserialization, path traversal, authentication bypass with broad access, or unrestricted access to highly sensitive data.
+- `high`: Significant exploitable vulnerability, privilege escalation, injection (SQL, XSS), hardcoded secrets, race conditions, or cross-tenant data access that should block merging.
 - `medium`: Meaningful security weakness requiring specific conditions or limited impact, such as incomplete authorization, unsafe error handling, or missing validation on a sensitive operation.
 - `low`: Defense-in-depth issue or localized weakness with limited immediate impact.
 

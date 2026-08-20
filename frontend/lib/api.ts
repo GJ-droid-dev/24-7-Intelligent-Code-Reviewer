@@ -1,6 +1,18 @@
 import { Review, ReviewSubmission, HistoricalRule } from "./types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+function getApiBaseUrl(): string {
+  const envUrl =
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1"
+      ? "https://code-reviewer-backend-g4bxczv4yq-uc.a.run.app"
+      : "http://localhost:8000");
+
+  const clean = envUrl.replace(/\/+$/, "");
+  return clean.endsWith("/api/v1") ? clean : `${clean}/api/v1`;
+}
+
+export const API_BASE_URL = getApiBaseUrl();
 
 interface FetchOptions extends RequestInit {
   token?: string | null;

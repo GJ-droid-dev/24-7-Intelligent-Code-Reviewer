@@ -4,7 +4,7 @@
 
 from datetime import datetime, timezone
 from typing import List, Optional, Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from app.models.finding import Finding, ScoreBreakdown
 
 
@@ -15,6 +15,13 @@ class ReviewRequest(BaseModel):
     title: Optional[str] = Field(None, max_length=200, description="Optional title or PR title")
     description: Optional[str] = Field(None, max_length=2000, description="Optional description or PR summary")
     language: Optional[str] = Field(None, max_length=50, description="Optional override for programming language")
+
+    @field_validator("code")
+    @classmethod
+    def validate_code_not_empty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("Code submission cannot be empty or whitespace only.")
+        return v
 
 
 class ReviewSubmitResponse(BaseModel):

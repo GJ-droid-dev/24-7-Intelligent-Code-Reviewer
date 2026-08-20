@@ -44,7 +44,7 @@ export default function LoginPage() {
       router.push("/");
     } catch (err: unknown) {
       console.error("Google Sign-In Error:", err);
-      setError("Google Sign-In error. Try Instant Demo mode for local testing.");
+      setError("Google Sign-In provider is not enabled in Firebase Console for this project. Please click 'Instant Demo Access (Staff Eng)' above to test all features immediately.");
     } finally {
       setLoading(false);
     }

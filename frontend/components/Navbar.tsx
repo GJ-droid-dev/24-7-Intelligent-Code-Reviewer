@@ -23,10 +23,24 @@ export function Navbar() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   useEffect(() => {
-    // Check backend health
-    api.getHealth()
-      .then(() => setBackendOnline(true))
-      .catch(() => setBackendOnline(false));
+    let mounted = true;
+    const checkHealth = () => {
+      api
+        .getHealth()
+        .then(() => {
+          if (mounted) setBackendOnline(true);
+        })
+        .catch(() => {
+          if (mounted) setBackendOnline(false);
+        });
+    };
+
+    checkHealth();
+    const interval = setInterval(checkHealth, 20000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   const navLinks = [

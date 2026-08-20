@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/api";
 import { CodeEditor, SAMPLE_SNIPPETS } from "@/components/submission/CodeEditor";
 import { AgentPipelineStatus } from "@/components/submission/AgentPipelineStatus";
+import { FieldTooltip } from "@/components/submission/FieldTooltip";
 import { 
   Play, 
   Loader2, 
@@ -43,20 +44,21 @@ export default function SubmitWorkspacePage() {
         token = "mock-test-token-test-user-001";
       }
 
-      const submission = {
-        title,
-        description,
-        code,
-        language: language === "auto" ? "python" : language,
-      };
+      const review = await api.submitReview(
+        {
+          title,
+          description: description || undefined,
+          language,
+          code,
+        },
+        token
+      );
 
-      const response = await api.submitReview(submission, token);
-      
-      // Redirect to Review Report page with analysis animation
-      router.push(`/reviews/${response.reviewId}`);
+      // Navigate directly to dedicated review report page
+      router.push(`/reviews/${review.reviewId}`);
     } catch (err: unknown) {
       console.error("Submission failed:", err);
-      const message = err instanceof Error ? err.message : "Failed to submit review. Ensure backend is running on port 8000.";
+      const message = err instanceof Error ? err.message : "Failed to submit review. Ensure backend is running.";
       setError(message);
       setSubmitting(false);
     }
@@ -65,37 +67,37 @@ export default function SubmitWorkspacePage() {
   return (
     <div className="space-y-6">
       {/* Workspace Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#262626] pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#262626]">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="px-2 py-0.5 rounded bg-[#3291FF]/10 text-[#3291FF] text-[10px] font-mono uppercase tracking-wider border border-[#3291FF]/30">
-              Workspace
+          <h1 className="text-xl font-bold text-[#FFFFFF] tracking-tight flex items-center space-x-2">
+            <span>Precision Editorial Workspace</span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#3291FF]/10 text-[#3291FF] border border-[#3291FF]/30">
+              Active Session
             </span>
-            <h1 className="text-xl font-bold text-[#FFFFFF] tracking-tight">
-              Code Review Submission & Analysis
-            </h1>
-          </div>
+          </h1>
           <p className="text-xs text-[#8F8F8F] mt-1">
-            Submit code diffs or snippets to trigger parallel evaluation across 5 specialist agents and synthesized scoring.
+            Dispatch code diffs directly through the asynchronous 7-Agent AI review matrix.
           </p>
         </div>
 
-        <div className="flex items-center space-x-2">
+        {/* Action Controls */}
+        <div className="flex items-center space-x-3">
           <button
             type="button"
             onClick={() => {
-              setTitle(SAMPLE_SNIPPETS.python_order_api.title);
-              setDescription(SAMPLE_SNIPPETS.python_order_api.desc);
+              setTitle("Add customer order-history API");
+              setDescription("Expose GET /orders/history endpoint with customer filter and order item aggregation.");
+              setLanguage("python");
               setCode(SAMPLE_SNIPPETS.python_order_api.code);
-              setLanguage(SAMPLE_SNIPPETS.python_order_api.lang);
             }}
-            className="px-3 py-1.5 rounded bg-[#141414] hover:bg-[#1A1A1A] border border-[#262626] text-xs font-mono text-[#8F8F8F] hover:text-[#EBEBEB] transition-colors"
+            className="px-3 py-1.5 rounded bg-[#141414] hover:bg-[#1F1F1F] border border-[#262626] text-xs text-[#8F8F8F] hover:text-[#EBEBEB] transition-all font-mono"
           >
-            Reset to Benchmark Sample
+            Reset Template
           </button>
         </div>
       </div>
 
+      {/* Submission Error Banner */}
       {error && (
         <div className="p-3.5 rounded-lg bg-red-950/30 border border-red-900/50 flex items-start space-x-2 text-xs text-red-400 font-mono">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -114,8 +116,14 @@ export default function SubmitWorkspacePage() {
           <div className="rounded-lg bg-[#141414] border border-[#262626] p-4 space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-[11px] font-mono text-[#8F8F8F] uppercase">
-                  Pull Request / Change Title
+                <label className="text-[11px] font-mono text-[#8F8F8F] uppercase flex items-center">
+                  <span>Pull Request / Change Title</span>
+                  <FieldTooltip
+                    title="Change Intent & Scope"
+                    description="Defines the core business objective and expected functionality of the code modification."
+                    agentImpact="Agents match your code against this intent to catch scope creep, verify completeness, and frame the executive summary."
+                    align="left"
+                  />
                 </label>
                 <input
                   type="text"
@@ -128,8 +136,14 @@ export default function SubmitWorkspacePage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-mono text-[#8F8F8F] uppercase">
-                  Target Service / Component
+                <label className="text-[11px] font-mono text-[#8F8F8F] uppercase flex items-center">
+                  <span>Target Service / Component</span>
+                  <FieldTooltip
+                    title="Architectural Tier & Rules"
+                    description="Identifies the file path, service tier, or layer being modified (e.g. API router, database repository, frontend component)."
+                    agentImpact="Triggers layer-specific checks (e.g. HTTP status codes for routers, N+1 queries for DB) and fetches historical team rules."
+                    align="right"
+                  />
                 </label>
                 <input
                   type="text"
@@ -140,8 +154,14 @@ export default function SubmitWorkspacePage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-[11px] font-mono text-[#8F8F8F] uppercase">
-                Context / Architectural Notes (Optional)
+              <label className="text-[11px] font-mono text-[#8F8F8F] uppercase flex items-center">
+                <span>Context / Architectural Notes (Optional)</span>
+                <FieldTooltip
+                  title="Design Constraints & Trade-offs"
+                  description="Provides background constraints, traffic load assumptions, intentional trade-offs, or security policies not obvious from the diff alone."
+                  agentImpact="Suppresses false-positive warnings for intentional design choices and grounds Architecture & Scalability analysis."
+                  align="left"
+                />
               </label>
               <textarea
                 rows={2}

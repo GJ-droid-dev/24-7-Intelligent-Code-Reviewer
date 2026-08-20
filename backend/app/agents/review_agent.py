@@ -26,36 +26,63 @@ class ReviewAgent(BaseAgent):
         review_id: str,
     ) -> List[Finding]:
         """
-        Merge findings across all 5 specialist agents, eliminate duplicates,
-        and sort by severity (critical -> high -> medium -> low).
+        Merge findings across all specialist agents, eliminate duplicates,
+        resolve severity conflicts, and sort by severity (critical -> high -> medium -> low).
         """
+        severity_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
         combined_findings: List[Finding] = []
-        seen_descriptions = set()
-        finding_counter = 1
+
+        def is_duplicate(f1: Finding, f2: AgentFinding) -> bool:
+            # 1. Match by explicit historical/security rule ID
+            if f1.matchedRuleId and f2.matchedRuleId and f1.matchedRuleId == f2.matchedRuleId:
+                return True
+
+            d1 = f1.description.lower().strip()
+            d2 = f2.description.lower().strip()
+
+            # 2. Exact or substring containment match
+            if d1 == d2 or d1 in d2 or d2 in d1:
+                return True
+
+            # 3. Token overlap similarity
+            words1 = set(d1.split())
+            words2 = set(d2.split())
+            if words1 and words2:
+                overlap = len(words1 & words2) / min(len(words1), len(words2))
+                if overlap >= 0.7:
+                    return True
+
+            return False
 
         for response in specialist_responses:
             for f in response.findings:
-                # Deduplication key based on normalized description substring
-                desc_key = f.description[:60].lower().strip()
-                if desc_key in seen_descriptions:
-                    continue
-                seen_descriptions.add(desc_key)
+                # Check for existing duplicate finding
+                duplicate_found = False
+                for existing in combined_findings:
+                    if is_duplicate(existing, f):
+                        duplicate_found = True
+                        # Conflict resolution: preserve higher severity
+                        if severity_rank.get(f.severity, 4) < severity_rank.get(existing.severity, 4):
+                            existing.severity = f.severity
+                        if not existing.matchedRuleId and f.matchedRuleId:
+                            existing.matchedRuleId = f.matchedRuleId
+                        break
 
-                combined_findings.append(
-                    Finding(
-                        id=f"{review_id}-f{finding_counter:02d}",
-                        agentSource=self._map_agent_source(response.agent),
-                        category=f.category,
-                        severity=f.severity,
-                        description=f.description,
-                        suggestedFix=f.suggestedFix,
-                        matchedRuleId=f.matchedRuleId,
+                if not duplicate_found:
+                    combined_findings.append(
+                        Finding(
+                            id=f"{review_id}-f{len(combined_findings) + 1:02d}",
+                            agentSource=self._map_agent_source(response.agent),
+                            category=f.category,
+                            severity=f.severity,
+                            title=f.title or (f.description[:60] + "..." if len(f.description) > 60 else f.description),
+                            description=f.description,
+                            suggestedFix=f.suggestedFix,
+                            matchedRuleId=f.matchedRuleId,
+                        )
                     )
-                )
-                finding_counter += 1
 
         # Sort by severity
-        severity_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
         combined_findings.sort(key=lambda item: severity_rank.get(item.severity, 4))
         return combined_findings
 
