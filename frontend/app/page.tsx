@@ -176,26 +176,22 @@ export default function SubmitWorkspacePage() {
           />
         </div>
 
-        {/* Full-Width Run Action Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-[#141414] border border-[#262626]">
-          <div className="text-xs text-[#8F8F8F]">
-            <span>Ready to evaluate. Pressing Run will dispatch your code to the 7-agent evaluation matrix.</span>
-          </div>
-
+        {/* Centered 25% Width Run Button */}
+        <div className="flex justify-center pt-2">
           <button
             type="submit"
             disabled={submitting}
-            className="px-8 py-3 rounded-lg bg-[#3291FF] hover:bg-[#0070F3] disabled:opacity-50 text-[#FFFFFF] font-semibold text-xs font-mono uppercase tracking-wider shadow-[0_0_25px_rgba(50,145,255,0.3)] hover:shadow-[0_0_35px_rgba(50,145,255,0.5)] transition-all flex items-center justify-center space-x-2 shrink-0 cursor-pointer"
+            className="w-1/4 min-w-[200px] py-3.5 px-6 rounded-lg bg-[#3291FF] hover:bg-[#0070F3] disabled:opacity-50 text-[#FFFFFF] font-semibold text-sm font-mono uppercase tracking-wider shadow-[0_0_25px_rgba(50,145,255,0.3)] hover:shadow-[0_0_35px_rgba(50,145,255,0.5)] transition-all flex items-center justify-center space-x-2 cursor-pointer"
           >
             {submitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Orchestrating 7-Agent Pipeline...</span>
+                <span>Running...</span>
               </>
             ) : (
               <>
                 <Play className="w-4 h-4 fill-current" />
-                <span>Run 7-Agent Code Review</span>
+                <span>Run</span>
               </>
             )}
           </button>
