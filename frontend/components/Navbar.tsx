@@ -100,7 +100,7 @@ export function Navbar() {
             ) : backendOnline ? (
               <>
                 <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                <span className="text-emerald-400">Backend Ready</span>
+                <span className="text-emerald-400">Live</span>
               </>
             ) : (
               <>
