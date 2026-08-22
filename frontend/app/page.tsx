@@ -62,6 +62,13 @@ export default function SubmitWorkspacePage() {
     }
   };
 
+  const handleSelectSample = (sample: { title: string; lang: string; code: string; desc: string }) => {
+    setCode(sample.code);
+    setLanguage(sample.lang);
+    setTitle(sample.title);
+    setDescription(sample.desc);
+  };
+
   return (
     <div className="space-y-6">
       {/* Workspace Header */}
@@ -173,6 +180,7 @@ export default function SubmitWorkspacePage() {
             onChange={setCode}
             language={language}
             onLanguageChange={setLanguage}
+            onSelectSample={handleSelectSample}
           />
         </div>
 

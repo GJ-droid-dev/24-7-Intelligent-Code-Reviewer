@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Editor from "@monaco-editor/react";
-import { Code, Sparkles, Trash2, Copy, Check } from "lucide-react";
+import { Code, Sparkles, Trash2, Copy, Check, ChevronDown } from "lucide-react";
 
 interface CodeEditorProps {
   value: string;
   onChange: (val: string) => void;
   language: string;
   onLanguageChange: (lang: string) => void;
+  onSelectSample?: (sample: { title: string; lang: string; code: string; desc: string }) => void;
   readOnly?: boolean;
 }
 
@@ -151,14 +152,51 @@ export function CodeEditor({
   onChange,
   language,
   onLanguageChange,
+  onSelectSample,
   readOnly = false,
 }: CodeEditorProps) {
   const [copied, setCopied] = useState(false);
+  const [isSampleOpen, setIsSampleOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsSampleOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsSampleOpen(false);
+      }
+    };
+
+    if (isSampleOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isSampleOpen]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(value);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSampleClick = (sample: { title: string; lang: string; code: string; desc: string }) => {
+    if (onSelectSample) {
+      onSelectSample(sample);
+    } else {
+      onChange(sample.code);
+      onLanguageChange(sample.lang);
+    }
+    setIsSampleOpen(false);
   };
 
   const lineCount = value.split("\n").length;
@@ -196,34 +234,60 @@ export function CodeEditor({
         {/* Action Controls & Sample Dropdown */}
         <div className="flex items-center space-x-2">
           {!readOnly && (
-            <div className="relative group">
-              <button className="flex items-center space-x-1.5 px-2.5 py-1 rounded bg-[#1A1A1A] hover:bg-[#222222] border border-[#3291FF]/40 text-[#3291FF] text-xs font-mono transition-colors">
+            <div className="relative" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsSampleOpen((prev) => !prev)}
+                className={`flex items-center space-x-1.5 px-2.5 py-1 rounded border text-xs font-mono transition-all ${
+                  isSampleOpen
+                    ? "bg-[#3291FF]/10 border-[#3291FF] text-[#3291FF]"
+                    : "bg-[#1A1A1A] hover:bg-[#222222] border-[#3291FF]/40 text-[#3291FF]"
+                }`}
+              >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Load Sample</span>
+                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${isSampleOpen ? "rotate-180" : ""}`} />
               </button>
               
-              <div className="absolute right-0 mt-1 w-64 rounded bg-[#1A1A1A] border border-[#262626] shadow-xl p-1.5 hidden group-hover:block z-30">
-                <p className="text-[10px] text-[#8F8F8F] font-mono px-2 py-1 uppercase tracking-wider">
-                  Test Submissions
-                </p>
-                {Object.entries(SAMPLE_SNIPPETS).map(([key, sample]) => (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      onChange(sample.code);
-                      onLanguageChange(sample.lang);
-                    }}
-                    className="w-full text-left p-2 rounded hover:bg-[#262626] text-xs text-[#EBEBEB] transition-colors"
-                  >
-                    <p className="font-medium text-[#EBEBEB]">{sample.title}</p>
-                    <p className="text-[10px] text-[#8F8F8F] line-clamp-1">{sample.desc}</p>
-                  </button>
-                ))}
-              </div>
+              {isSampleOpen && (
+                <div className="absolute right-0 mt-1.5 w-72 rounded-lg bg-[#141414] border border-[#333333] shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="flex items-center justify-between px-2 py-1 border-b border-[#262626] mb-1">
+                    <p className="text-[10px] text-[#8F8F8F] font-mono uppercase tracking-wider font-semibold">
+                      Select Test Scenario
+                    </p>
+                    <span className="text-[10px] font-mono text-[#3291FF] bg-[#3291FF]/10 px-1.5 py-0.5 rounded">
+                      {Object.keys(SAMPLE_SNIPPETS).length} Samples
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    {Object.entries(SAMPLE_SNIPPETS).map(([key, sample]) => (
+                      <button
+                        type="button"
+                        key={key}
+                        onClick={() => handleSampleClick(sample)}
+                        className="w-full text-left p-2.5 rounded-md hover:bg-[#1F1F1F] active:bg-[#262626] text-xs text-[#EBEBEB] transition-colors group cursor-pointer border border-transparent hover:border-[#2D2D2D]"
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-[#EBEBEB] group-hover:text-[#3291FF] transition-colors">
+                            {sample.title}
+                          </p>
+                          <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-[#1A1A1A] text-[#8F8F8F] border border-[#2A2A2A]">
+                            {sample.lang}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-[#8F8F8F] mt-0.5 leading-tight">
+                          {sample.desc}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           <button
+            type="button"
             onClick={handleCopy}
             title="Copy Code"
             className="p-1.5 rounded hover:bg-[#1A1A1A] text-[#8F8F8F] hover:text-[#EBEBEB] transition-colors"
@@ -233,6 +297,7 @@ export function CodeEditor({
 
           {!readOnly && (
             <button
+              type="button"
               onClick={() => onChange("")}
               title="Clear Editor"
               className="p-1.5 rounded hover:bg-[#1A1A1A] text-[#8F8F8F] hover:text-red-400 transition-colors"
