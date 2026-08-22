@@ -13,10 +13,11 @@ interface CodeEditorProps {
   readOnly?: boolean;
 }
 
-export const SAMPLE_SNIPPETS: Record<string, { title: string; lang: string; code: string; desc: string }> = {
+export const SAMPLE_SNIPPETS: Record<string, { title: string; lang: string; component: string; code: string; desc: string }> = {
   python_order_api: {
     title: "Customer Order-History API (Python / FastAPI)",
     lang: "python",
+    component: "backend/app/routers/orders.py",
     desc: "FastAPI endpoint with cross-user IDOR, unpaginated SQL query, and missing authorization tests.",
     code: `from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional
@@ -67,6 +68,7 @@ async def get_order_history(
   typescript_auth_service: {
     title: "JWT Auth Middleware (TypeScript)",
     lang: "typescript",
+    component: "src/middleware/auth.ts",
     desc: "Express/Next.js auth middleware with unverified signature algorithm fallback and secret leak.",
     code: `import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
@@ -103,6 +105,7 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
   go_worker_pool: {
     title: "Concurrent Task Worker Pool (Go)",
     lang: "go",
+    component: "pkg/worker/scheduler.go",
     desc: "Go async task scheduler with unbounded goroutines and missing context cancellation.",
     code: `package main
 

@@ -17,6 +17,7 @@ export default function SubmitWorkspacePage() {
   const { getIdToken, signInDemo } = useAuth();
 
   const [title, setTitle] = useState("Add customer order-history API");
+  const [component, setComponent] = useState("backend/app/routers/orders.py");
   const [description, setDescription] = useState("Expose GET /orders/history endpoint with customer filter and order item aggregation.");
   const [language, setLanguage] = useState("python");
   const [code, setCode] = useState(SAMPLE_SNIPPETS.python_order_api.code);
@@ -62,11 +63,14 @@ export default function SubmitWorkspacePage() {
     }
   };
 
-  const handleSelectSample = (sample: { title: string; lang: string; code: string; desc: string }) => {
+  const handleSelectSample = (sample: { title: string; lang: string; component?: string; code: string; desc: string }) => {
     setCode(sample.code);
     setLanguage(sample.lang);
     setTitle(sample.title);
     setDescription(sample.desc);
+    if (sample.component) {
+      setComponent(sample.component);
+    }
   };
 
   return (
@@ -88,6 +92,7 @@ export default function SubmitWorkspacePage() {
             type="button"
             onClick={() => {
               setTitle("Add customer order-history API");
+              setComponent("backend/app/routers/orders.py");
               setDescription("Expose GET /orders/history endpoint with customer filter and order item aggregation.");
               setLanguage("python");
               setCode(SAMPLE_SNIPPETS.python_order_api.code);
@@ -147,8 +152,10 @@ export default function SubmitWorkspacePage() {
               </label>
               <input
                 type="text"
-                defaultValue="backend/app/routers/orders.py"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A0A0A] border border-[#262626] text-xs text-[#8F8F8F] focus:outline-none focus:border-[#3291FF] transition-colors"
+                value={component}
+                onChange={(e) => setComponent(e.target.value)}
+                placeholder="e.g. backend/app/routers/orders.py"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#0A0A0A] border border-[#262626] text-xs text-[#EBEBEB] focus:outline-none focus:border-[#3291FF] transition-colors"
               />
             </div>
           </div>
